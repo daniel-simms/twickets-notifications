@@ -1,5 +1,5 @@
 // Config
-const { debug, accountSid, authToken } = require('./config');
+const { contacts, debug, accountSid, authToken } = require('./config');
 // Web scraper
 const puppeteer = require('puppeteer');
 // Pretty console
@@ -63,6 +63,10 @@ module.exports =  {
 
             // If a ticket has been posted then check for a match
             if (ticket) {
+
+                // seated tickets can be seats or seated on twickets
+                search.tier = search.tier === 'seated' && ['seated', 'seats'];
+
                 // Check for debug
                 if (debug) {
                     // Log Venue
@@ -70,29 +74,21 @@ module.exports =  {
                     ? console.log('Venue:', chalk.green(ticket.venue))
                     : console.log('Venue:', chalk.red(ticket.venue));
                     // Log Tier
-                    ticket.tier === search.tier
+                    ticket.tier === search.tier[0] || ticket.tier === search.tier[1] 
                     ? console.log('Tier:', chalk.green(ticket.tier))
                     : console.log('Tier:', chalk.red(ticket.tier));
                 }
                 
                 //  Check for match
-                if (ticket.venue === search.venue && ticket.tier === search.tier){
+                if (ticket.venue === search.venue && (ticket.tier === search.tier[0] || ticket.tier === search.tier[1])){ 
                     // Log success
                     console.log(chalk.inverse.green(`!!! ${search.artist} TICKET FOUND!!!`))
 
                     // Stop while loop
                     search.found = true;
-                    // SMS Contacts
-                    const CONTACTS = debug 
-                    ?[ { name: 'Danny', number: '+447984298585' } ]
-                    :[
-                        { name: 'Danny', number: '+447984298585' },
-                        { name: 'Olivia', number: '+447774055530' },
-                        { name: 'Natalie', number: '+447506201588' }
-                    ];
                     
                     // Send SMS
-                    CONTACTS.forEach((contact) => {
+                    contacts.forEach((contact) => {
                         client.messages
                         .create({
                             body: `${search.artist} Ticket Found: ${ticket.link} `,
